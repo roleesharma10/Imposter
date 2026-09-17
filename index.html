@@ -675,6 +675,15 @@ let wordB;
 
 let differentPlayer;
 let startingPlayer;
+  
+  /* =========================================
+   USED WORD PAIR MEMORY
+   ========================================= */
+
+let usedWordPairs =
+  JSON.parse(
+    localStorage.getItem("usedWordPairs") || "[]"
+  );
 
 
 /* =========================================
@@ -847,17 +856,57 @@ function startFirstRound() {
 
 function startRound() {
 
-  /* Pick random pair */
+/* Pick random unused pair */
 
-  selectedPair =
-    wordPairs[
-      Math.floor(
-        Math.random() *
-        wordPairs.length
-      )
-    ];
+let availablePairs =
+  wordPairs.filter(
+    (pair, index) =>
+      !usedWordPairs.includes(index)
+  );
 
- wordA =
+
+/* If every pair has been used, start a fresh cycle */
+
+if (availablePairs.length === 0) {
+
+  usedWordPairs = [];
+
+  localStorage.removeItem(
+    "usedWordPairs"
+  );
+
+  availablePairs = [...wordPairs];
+}
+
+
+/* Pick random pair from unused pairs */
+
+const randomPair =
+  availablePairs[
+    Math.floor(
+      Math.random() *
+      availablePairs.length
+    )
+  ];
+
+selectedPair =
+  randomPair;
+
+
+/* Remember this pair */
+
+const pairIndex =
+  wordPairs.indexOf(selectedPair);
+
+usedWordPairs.push(pairIndex);
+
+localStorage.setItem(
+  "usedWordPairs",
+  JSON.stringify(usedWordPairs)
+);
+
+
+wordA =
   selectedPair.a;
 
 wordB =
