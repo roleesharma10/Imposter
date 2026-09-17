@@ -8,6 +8,7 @@
 <style>
 * {
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
 }
 
 body {
@@ -80,6 +81,7 @@ button {
   cursor: pointer;
   background: #242424;
   color: white;
+  touch-action: manipulation;
 }
 
 button.secondary {
@@ -88,7 +90,18 @@ button.secondary {
 }
 
 button.danger {
-  background: #b33;
+  background: #eee;
+  color: #a33;
+}
+
+.big-emoji {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.player-name {
+  font-size: 32px;
+  font-weight: 700;
 }
 
 .word {
@@ -100,16 +113,6 @@ button.danger {
 .warning {
   font-size: 14px;
   color: #888;
-}
-
-.player-name {
-  font-size: 32px;
-  font-weight: 700;
-}
-
-.big-emoji {
-  font-size: 60px;
-  margin-bottom: 10px;
 }
 
 .starting-player {
@@ -128,6 +131,73 @@ button.danger {
 .small {
   font-size: 14px;
 }
+
+.player-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.player-row input {
+  margin: 0;
+  flex: 1;
+}
+
+.remove-player {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  margin: 0;
+  border-radius: 12px;
+  background: #eee;
+  color: #555;
+  font-size: 22px;
+}
+
+.player-controls {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.player-controls button {
+  margin: 0;
+}
+
+.clear-button {
+  margin-top: 18px;
+  background: transparent;
+  color: #a33;
+  font-size: 14px;
+}
+
+.hold-button {
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+  transition: transform 0.1s;
+}
+
+.hold-button:active {
+  transform: scale(0.97);
+}
+
+.hold-progress {
+  margin-top: 12px;
+  font-size: 13px;
+  color: #888;
+}
+
+.confirm-box {
+  margin-top: 20px;
+}
+
+.divider {
+  height: 1px;
+  background: #eee;
+  margin: 20px 0;
+}
 </style>
 </head>
 
@@ -139,90 +209,225 @@ button.danger {
   <div id="home" class="screen">
     <div class="big-emoji">🎭</div>
     <h1>IMPOSTER</h1>
-    <p>The game where everyone gets a word.<br>
-    One person just gets a slightly different one.</p>
+
+    <p>
+      Everyone gets a word.<br>
+      One person gets a slightly different one.
+    </p>
 
     <div class="card">
       <label>Number of players</label>
+
       <select id="playerCount"></select>
 
-      <button onclick="setupPlayers()">START GAME</button>
+      <button onclick="setupPlayers()">
+        START GAME
+      </button>
     </div>
   </div>
 
 
   <!-- PLAYER SETUP -->
   <div id="setup" class="screen hidden">
+
     <h2>Who's playing?</h2>
+
     <p>Enter everyone's name.</p>
 
     <div class="card">
+
       <div id="nameInputs"></div>
 
-      <button onclick="startGame()">LET'S GO 🎭</button>
+      <div class="player-controls">
+        <button class="secondary" onclick="addPlayer()">
+          + Add player
+        </button>
+      </div>
+
+      <button onclick="startFirstRound()">
+        LET'S GO 🎭
+      </button>
+
+      <button
+        class="clear-button"
+        onclick="clearPlayers()">
+        🗑️ Clear all players
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- BETWEEN ROUND PLAYER LIST -->
+  <div id="playersScreen" class="screen hidden">
+
+    <h2>Players</h2>
+
+    <p>
+      Change the group if someone joined or left.
+    </p>
+
+    <div class="card">
+
+      <div id="roundPlayerInputs"></div>
+
+      <div class="player-controls">
+
+        <button
+          class="secondary"
+          onclick="addRoundPlayer()">
+          + Add
+        </button>
+
+      </div>
+
+      <button onclick="startNewRound()">
+        START NEW ROUND 🎭
+      </button>
+
+      <button
+        class="clear-button"
+        onclick="clearPlayersAndRestart()">
+        🗑️ Clear all players
+      </button>
+
     </div>
   </div>
 
 
   <!-- PASS PHONE -->
   <div id="passScreen" class="screen hidden">
+
     <div class="big-emoji">📱</div>
 
     <p>Pass the phone to</p>
-    <div class="player-name" id="currentPlayer"></div>
+
+    <div
+      class="player-name"
+      id="currentPlayer">
+    </div>
 
     <div class="card">
-      <p>Make sure nobody else is looking.</p>
 
-      <button onclick="revealWord()">HOLD TO REVEAL</button>
+      <p>
+        Make sure nobody else is looking.
+      </p>
+
+      <button
+        id="holdButton"
+        class="hold-button">
+        HOLD TO REVEAL
+      </button>
+
+      <div
+        class="hold-progress"
+        id="holdProgress">
+        Press and hold for one second.
+      </div>
 
       <p class="warning">
-        Your word will disappear before you pass the phone.
+        Your word will disappear before the phone is passed on.
       </p>
+
     </div>
   </div>
 
 
   <!-- WORD -->
   <div id="wordScreen" class="screen hidden">
+
     <p>Your word is...</p>
 
     <div class="card">
-      <div class="word" id="wordDisplay"></div>
+
+      <div
+        class="word"
+        id="wordDisplay">
+      </div>
 
       <p class="warning">
         Remember it. Don't say it out loud.
       </p>
 
-      <button onclick="hideWord()">HIDE & PASS →</button>
+      <button onclick="hideWord()">
+        HIDE & PASS →
+      </button>
+
     </div>
   </div>
 
 
-  <!-- START -->
+  <!-- STARTING PLAYER -->
   <div id="startScreen" class="screen hidden">
+
     <div class="big-emoji">🎬</div>
 
     <h2>Everyone has their word.</h2>
-    <p>The round starts with...</p>
+
+    <p>
+      The round starts with...
+    </p>
 
     <div class="card">
-      <div class="starting-player" id="startingPlayer"></div>
 
-      <p>Give your first clue!</p>
+      <div
+        class="starting-player"
+        id="startingPlayer">
+      </div>
 
-      <button onclick="showReveal()">PLAY</button>
+      <p>
+        When you're ready, tap REVEAL below.
+      </p>
+
+      <button onclick="showRevealConfirmation()">
+        REVEAL
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- REVEAL CONFIRMATION -->
+  <div id="confirmRevealScreen" class="screen hidden">
+
+    <div class="big-emoji">⚠️</div>
+
+    <h2>Ready to reveal?</h2>
+
+    <div class="card">
+
+      <p>
+        Make sure you've finished the round.
+      </p>
+
+      <p>
+        The next screen will reveal the two words
+        and who received the different word.
+      </p>
+
+      <button onclick="showReveal()">
+        YES, REVEAL
+      </button>
+
+      <button
+        class="secondary"
+        onclick="showScreen('startScreen')">
+        GO BACK
+      </button>
+
     </div>
   </div>
 
 
   <!-- REVEAL -->
   <div id="revealScreen" class="screen hidden">
+
     <div class="big-emoji">🔎</div>
 
     <h2>Round Reveal</h2>
 
     <div class="card">
+
       <p>The two words were:</p>
 
       <div class="reveal-box">
@@ -233,11 +438,19 @@ button.danger {
         <strong id="wordBReveal"></strong>
       </div>
 
-      <p>The different word belonged to:</p>
+      <p>
+        The different word belonged to:
+      </p>
 
-      <div class="starting-player" id="imposterReveal"></div>
+      <div
+        class="starting-player"
+        id="imposterReveal">
+      </div>
 
-      <button onclick="location.reload()">PLAY AGAIN</button>
+      <button onclick="goToNextRound()">
+        PLAY AGAIN
+      </button>
+
     </div>
   </div>
 
@@ -246,9 +459,9 @@ button.danger {
 
 <script>
 
-/* =========================
+/* =========================================
    WORD DATABASE
-   ========================= */
+   ========================================= */
 
 const wordPairs = [
 
@@ -307,9 +520,9 @@ const wordPairs = [
 ];
 
 
-/* =========================
+/* =========================================
    GAME VARIABLES
-   ========================= */
+   ========================================= */
 
 let players = [];
 let currentIndex = 0;
@@ -322,97 +535,206 @@ let differentPlayer;
 let startingPlayer;
 
 
-/* =========================
-   INITIAL PLAYER COUNT
-   ========================= */
+/* =========================================
+   PLAYER COUNT DROPDOWN
+   ========================================= */
 
-const playerCount = document.getElementById("playerCount");
+const playerCount =
+  document.getElementById("playerCount");
 
 for (let i = 3; i <= 20; i++) {
-  const option = document.createElement("option");
+
+  const option =
+    document.createElement("option");
+
   option.value = i;
-  option.textContent = i + " players";
+  option.textContent =
+    i + " players";
+
   playerCount.appendChild(option);
 }
 
 
-/* =========================
-   SCREEN FUNCTION
-   ========================= */
+/* =========================================
+   SCREEN CONTROL
+   ========================================= */
 
 function showScreen(id) {
 
-  document.querySelectorAll(".screen").forEach(screen => {
-    screen.classList.add("hidden");
-  });
+  document
+    .querySelectorAll(".screen")
+    .forEach(screen => {
+      screen.classList.add("hidden");
+    });
 
-  document.getElementById(id).classList.remove("hidden");
+  document
+    .getElementById(id)
+    .classList.remove("hidden");
 }
 
 
-/* =========================
-   PLAYER SETUP
-   ========================= */
+/* =========================================
+   FIRST GAME SETUP
+   ========================================= */
 
 function setupPlayers() {
 
-  const count = Number(playerCount.value);
+  const count =
+    Number(playerCount.value);
 
-  const container = document.getElementById("nameInputs");
+  const container =
+    document.getElementById("nameInputs");
 
   container.innerHTML = "";
 
   for (let i = 0; i < count; i++) {
 
-    const input = document.createElement("input");
-
-    input.placeholder = "Player " + (i + 1);
-
-    input.id = "player" + i;
-
-    container.appendChild(input);
+    createNameInput(
+      container,
+      i
+    );
   }
 
   showScreen("setup");
 }
 
 
-/* =========================
-   START GAME
-   ========================= */
+/* =========================================
+   CREATE NAME INPUT
+   ========================================= */
 
-function startGame() {
+function createNameInput(container, index) {
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "player-row";
+
+  const input =
+    document.createElement("input");
+
+  input.placeholder =
+    "Player " + (index + 1);
+
+  input.value =
+    players[index]?.name || "";
+
+  input.className =
+    "player-input";
+
+  row.appendChild(input);
+
+  if (index >= 3) {
+
+    const remove =
+      document.createElement("button");
+
+    remove.className =
+      "remove-player";
+
+    remove.textContent = "−";
+
+    remove.onclick = () => {
+      row.remove();
+    };
+
+    row.appendChild(remove);
+  }
+
+  container.appendChild(row);
+}
+
+
+/* =========================================
+   ADD PLAYER FIRST SETUP
+   ========================================= */
+
+function addPlayer() {
+
+  const container =
+    document.getElementById("nameInputs");
+
+  const current =
+    container.querySelectorAll(
+      ".player-input"
+    ).length;
+
+  if (current >= 20) return;
+
+  createNameInput(
+    container,
+    current
+  );
+}
+
+
+/* =========================================
+   START FIRST ROUND
+   ========================================= */
+
+function startFirstRound() {
+
+  const inputs =
+    document.querySelectorAll(
+      "#nameInputs .player-input"
+    );
 
   players = [];
 
-  for (let i = 0; i < Number(playerCount.value); i++) {
+  inputs.forEach((input, index) => {
 
     const name =
-      document.getElementById("player" + i).value.trim()
-      || "Player " + (i + 1);
+      input.value.trim()
+      || "Player " + (index + 1);
 
     players.push({
       name: name,
       word: null
     });
-  }
+
+  });
+
+  startRound();
+}
 
 
-  /* Pick word pair */
+/* =========================================
+   START A ROUND
+   ========================================= */
+
+function startRound() {
+
+  /* Pick random pair */
 
   selectedPair =
-    wordPairs[Math.floor(Math.random() * wordPairs.length)];
+    wordPairs[
+      Math.floor(
+        Math.random() *
+        wordPairs.length
+      )
+    ];
 
-  wordA = selectedPair[0];
-  wordB = selectedPair[1];
+  wordA =
+    selectedPair[0];
+
+  wordB =
+    selectedPair[1];
 
 
-  /* Pick different-word player */
+  /* Pick random different-word player */
 
   const differentIndex =
-    Math.floor(Math.random() * players.length);
+    Math.floor(
+      Math.random() *
+      players.length
+    );
 
-  differentPlayer = players[differentIndex];
+  differentPlayer =
+    players[differentIndex];
+
+
+  /* Assign words */
 
   players.forEach(player => {
 
@@ -427,7 +749,12 @@ function startGame() {
   /* Pick starting player independently */
 
   startingPlayer =
-    players[Math.floor(Math.random() * players.length)];
+    players[
+      Math.floor(
+        Math.random() *
+        players.length
+      )
+    ];
 
 
   currentIndex = 0;
@@ -436,15 +763,20 @@ function startGame() {
 }
 
 
-/* =========================
-   NEXT PLAYER
-   ========================= */
+/* =========================================
+   SHOW NEXT PLAYER
+   ========================================= */
 
 function showNextPlayer() {
 
-  if (currentIndex >= players.length) {
+  if (
+    currentIndex >=
+    players.length
+  ) {
 
-    document.getElementById("startingPlayer").textContent =
+    document
+      .getElementById("startingPlayer")
+      .textContent =
       startingPlayer.name;
 
     showScreen("startScreen");
@@ -452,33 +784,117 @@ function showNextPlayer() {
     return;
   }
 
-  document.getElementById("currentPlayer").textContent =
+
+  document
+    .getElementById("currentPlayer")
+    .textContent =
     players[currentIndex].name;
 
   showScreen("passScreen");
 }
 
 
-/* =========================
+/* =========================================
+   HOLD TO REVEAL
+   ========================================= */
+
+const holdButton =
+  document.getElementById("holdButton");
+
+let holdTimer = null;
+let holding = false;
+
+function beginHold(event) {
+
+  event.preventDefault();
+
+  if (holding) return;
+
+  holding = true;
+
+  const progress =
+    document.getElementById("holdProgress");
+
+  progress.textContent =
+    "Keep holding...";
+
+  holdTimer =
+    setTimeout(() => {
+
+      if (holding) {
+
+        revealWord();
+
+      }
+
+    }, 1000);
+}
+
+
+function endHold() {
+
+  if (!holding) return;
+
+  holding = false;
+
+  clearTimeout(holdTimer);
+
+  document
+    .getElementById("holdProgress")
+    .textContent =
+    "Press and hold for one second.";
+}
+
+
+holdButton.addEventListener(
+  "pointerdown",
+  beginHold
+);
+
+holdButton.addEventListener(
+  "pointerup",
+  endHold
+);
+
+holdButton.addEventListener(
+  "pointercancel",
+  endHold
+);
+
+holdButton.addEventListener(
+  "pointerleave",
+  endHold
+);
+
+
+/* =========================================
    REVEAL WORD
-   ========================= */
+   ========================================= */
 
 function revealWord() {
 
-  document.getElementById("wordDisplay").textContent =
+  holding = false;
+
+  clearTimeout(holdTimer);
+
+  document
+    .getElementById("wordDisplay")
+    .textContent =
     players[currentIndex].word;
 
   showScreen("wordScreen");
 }
 
 
-/* =========================
+/* =========================================
    HIDE WORD
-   ========================= */
+   ========================================= */
 
 function hideWord() {
 
-  document.getElementById("wordDisplay").textContent = "";
+  document
+    .getElementById("wordDisplay")
+    .textContent = "";
 
   currentIndex++;
 
@@ -486,22 +902,261 @@ function hideWord() {
 }
 
 
-/* =========================
+/* =========================================
+   REVEAL CONFIRMATION
+   ========================================= */
+
+function showRevealConfirmation() {
+
+  showScreen(
+    "confirmRevealScreen"
+  );
+}
+
+
+/* =========================================
    FINAL REVEAL
-   ========================= */
+   ========================================= */
 
 function showReveal() {
 
-  document.getElementById("wordAReveal").textContent =
+  document
+    .getElementById("wordAReveal")
+    .textContent =
     wordA;
 
-  document.getElementById("wordBReveal").textContent =
+  document
+    .getElementById("wordBReveal")
+    .textContent =
     wordB;
 
-  document.getElementById("imposterReveal").textContent =
+  document
+    .getElementById("imposterReveal")
+    .textContent =
     differentPlayer.name;
 
   showScreen("revealScreen");
+}
+
+
+/* =========================================
+   NEXT ROUND
+   ========================================= */
+
+function goToNextRound() {
+
+  renderRoundPlayers();
+
+  showScreen(
+    "playersScreen"
+  );
+}
+
+
+/* =========================================
+   RENDER PLAYER LIST
+   ========================================= */
+
+function renderRoundPlayers() {
+
+  const container =
+    document.getElementById(
+      "roundPlayerInputs"
+    );
+
+  container.innerHTML = "";
+
+  players.forEach(
+    (player, index) => {
+
+      const row =
+        document.createElement("div");
+
+      row.className =
+        "player-row";
+
+      const input =
+        document.createElement("input");
+
+      input.value =
+        player.name;
+
+      input.className =
+        "round-player-input";
+
+      row.appendChild(input);
+
+
+      if (players.length > 3) {
+
+        const remove =
+          document.createElement("button");
+
+        remove.className =
+          "remove-player";
+
+        remove.textContent =
+          "−";
+
+        remove.onclick = () => {
+
+          if (
+            container
+              .querySelectorAll(
+                ".round-player-input"
+              ).length <= 3
+          ) return;
+
+          row.remove();
+
+        };
+
+        row.appendChild(remove);
+      }
+
+      container.appendChild(row);
+
+    }
+  );
+}
+
+
+/* =========================================
+   ADD PLAYER BETWEEN ROUNDS
+   ========================================= */
+
+function addRoundPlayer() {
+
+  const container =
+    document.getElementById(
+      "roundPlayerInputs"
+    );
+
+  const current =
+    container.querySelectorAll(
+      ".round-player-input"
+    ).length;
+
+  if (current >= 20) return;
+
+  const row =
+    document.createElement("div");
+
+  row.className =
+    "player-row";
+
+  const input =
+    document.createElement("input");
+
+  input.placeholder =
+    "New player";
+
+  input.className =
+    "round-player-input";
+
+  row.appendChild(input);
+
+
+  const remove =
+    document.createElement("button");
+
+  remove.className =
+    "remove-player";
+
+  remove.textContent =
+    "−";
+
+  remove.onclick = () => {
+    row.remove();
+  };
+
+  row.appendChild(remove);
+
+  container.appendChild(row);
+}
+
+
+/* =========================================
+   START NEW ROUND WITH CURRENT PLAYERS
+   ========================================= */
+
+function startNewRound() {
+
+  const inputs =
+    document.querySelectorAll(
+      ".round-player-input"
+    );
+
+  const updatedPlayers = [];
+
+  inputs.forEach(
+    (input, index) => {
+
+      const name =
+        input.value.trim()
+        || "Player " + (index + 1);
+
+      updatedPlayers.push({
+        name: name,
+        word: null
+      });
+
+    }
+  );
+
+
+  if (updatedPlayers.length < 3) {
+
+    alert(
+      "You need at least 3 players."
+    );
+
+    return;
+  }
+
+
+  players =
+    updatedPlayers;
+
+  startRound();
+}
+
+
+/* =========================================
+   CLEAR PLAYERS
+   ========================================= */
+
+function clearPlayers() {
+
+  const confirmed =
+    confirm(
+      "Clear the entire player list?"
+    );
+
+  if (!confirmed) return;
+
+  document
+    .getElementById("nameInputs")
+    .innerHTML = "";
+
+  players = [];
+
+  showScreen("home");
+}
+
+
+function clearPlayersAndRestart() {
+
+  const confirmed =
+    confirm(
+      "Clear all players and start a new game?"
+    );
+
+  if (!confirmed) return;
+
+  players = [];
+
+  showScreen("home");
 }
 
 </script>
