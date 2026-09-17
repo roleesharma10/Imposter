@@ -325,9 +325,7 @@ button.danger {
         Press and hold for one second.
       </div>
 
-      <p class="warning">
-        Your word will disappear before the phone is passed on.
-      </p>
+    
 
     </div>
   </div>
@@ -958,8 +956,7 @@ function beginHold(event) {
   const progress =
     document.getElementById("holdProgress");
 
-  progress.textContent =
-    "Keep holding...";
+ 
 
   holdTimer =
     setTimeout(() => {
@@ -970,7 +967,7 @@ function beginHold(event) {
 
       }
 
-    }, 1000);
+    }, 500);
 }
 
 
@@ -985,7 +982,7 @@ function endHold() {
   document
     .getElementById("holdProgress")
     .textContent =
-    "Press and hold for one second.";
+    "Press and hold.";
 }
 
 
