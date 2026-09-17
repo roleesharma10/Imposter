@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Imposter</title>
+
+<style>
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: #f7f3ee;
+  color: #242424;
+  min-height: 100vh;
+}
+
+#app {
+  min-height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.screen {
+  width: 100%;
+  max-width: 500px;
+  text-align: center;
+}
+
+.hidden {
+  display: none !important;
+}
+
+h1 {
+  font-size: 48px;
+  margin: 0 0 10px;
+}
+
+h2 {
+  font-size: 30px;
+  margin-bottom: 10px;
+}
+
+p {
+  color: #666;
+  line-height: 1.5;
+}
+
+.card {
+  background: white;
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.08);
+  margin-top: 20px;
+}
+
+input, select {
+  width: 100%;
+  padding: 15px;
+  margin: 8px 0;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  font-size: 16px;
+  background: white;
+}
+
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 12px;
+  border: none;
+  border-radius: 14px;
+  font-size: 17px;
+  font-weight: 600;
+  cursor: pointer;
+  background: #242424;
+  color: white;
+}
+
+button.secondary {
+  background: #eee;
+  color: #242424;
+}
+
+button.danger {
+  background: #b33;
+}
+
+.word {
+  font-size: 44px;
+  font-weight: 800;
+  margin: 30px 0;
+}
+
+.warning {
+  font-size: 14px;
+  color: #888;
+}
+
+.player-name {
+  font-size: 32px;
+  font-weight: 700;
+}
+
+.big-emoji {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.starting-player {
+  font-size: 38px;
+  font-weight: 800;
+  margin: 25px 0;
+}
+
+.reveal-box {
+  background: #f3eee8;
+  border-radius: 18px;
+  padding: 20px;
+  margin: 15px 0;
+}
+
+.small {
+  font-size: 14px;
+}
+</style>
+</head>
+
+<body>
+
+<div id="app">
+
+  <!-- HOME -->
+  <div id="home" class="screen">
+    <div class="big-emoji">🎭</div>
+    <h1>IMPOSTER</h1>
+    <p>The game where everyone gets a word.<br>
+    One person just gets a slightly different one.</p>
+
+    <div class="card">
+      <label>Number of players</label>
+      <select id="playerCount"></select>
+
+      <button onclick="setupPlayers()">START GAME</button>
+    </div>
+  </div>
+
+
+  <!-- PLAYER SETUP -->
+  <div id="setup" class="screen hidden">
+    <h2>Who's playing?</h2>
+    <p>Enter everyone's name.</p>
+
+    <div class="card">
+      <div id="nameInputs"></div>
+
+      <button onclick="startGame()">LET'S GO 🎭</button>
+    </div>
+  </div>
+
+
+  <!-- PASS PHONE -->
+  <div id="passScreen" class="screen hidden">
+    <div class="big-emoji">📱</div>
+
+    <p>Pass the phone to</p>
+    <div class="player-name" id="currentPlayer"></div>
+
+    <div class="card">
+      <p>Make sure nobody else is looking.</p>
+
+      <button onclick="revealWord()">HOLD TO REVEAL</button>
+
+      <p class="warning">
+        Your word will disappear before you pass the phone.
+      </p>
+    </div>
+  </div>
+
+
+  <!-- WORD -->
+  <div id="wordScreen" class="screen hidden">
+    <p>Your word is...</p>
+
+    <div class="card">
+      <div class="word" id="wordDisplay"></div>
+
+      <p class="warning">
+        Remember it. Don't say it out loud.
+      </p>
+
+      <button onclick="hideWord()">HIDE & PASS →</button>
+    </div>
+  </div>
+
+
+  <!-- START -->
+  <div id="startScreen" class="screen hidden">
+    <div class="big-emoji">🎬</div>
+
+    <h2>Everyone has their word.</h2>
+    <p>The round starts with...</p>
+
+    <div class="card">
+      <div class="starting-player" id="startingPlayer"></div>
+
+      <p>Give your first clue!</p>
+
+      <button onclick="showReveal()">PLAY</button>
+    </div>
+  </div>
+
+
+  <!-- REVEAL -->
+  <div id="revealScreen" class="screen hidden">
+    <div class="big-emoji">🔎</div>
+
+    <h2>Round Reveal</h2>
+
+    <div class="card">
+      <p>The two words were:</p>
+
+      <div class="reveal-box">
+        <strong id="wordAReveal"></strong>
+      </div>
+
+      <div class="reveal-box">
+        <strong id="wordBReveal"></strong>
+      </div>
+
+      <p>The different word belonged to:</p>
+
+      <div class="starting-player" id="imposterReveal"></div>
+
+      <button onclick="location.reload()">PLAY AGAIN</button>
+    </div>
+  </div>
+
+</div>
+
+
+<script>
+
+/* =========================
+   WORD DATABASE
+   ========================= */
+
+const wordPairs = [
+
+  ["Brick", "Stone"],
+  ["Umbrella", "Raincoat"],
+  ["Laptop", "Tablet"],
+  ["Backpack", "Suitcase"],
+  ["Mirror", "Window"],
+  ["Soap", "Shampoo"],
+  ["Toothbrush", "Comb"],
+  ["Bed", "Sofa"],
+  ["Jacket", "Sweater"],
+  ["Pen", "Marker"],
+  ["Notebook", "Diary"],
+  ["Pillow", "Cushion"],
+  ["Bottle", "Flask"],
+  ["Cup", "Mug"],
+  ["Plate", "Tray"],
+  ["Bucket", "Basket"],
+  ["Broom", "Mop"],
+  ["Towel", "Handkerchief"],
+  ["Clock", "Watch"],
+  ["Shoes", "Slippers"],
+  ["Jeans", "Trousers"],
+  ["Shirt", "Kurta"],
+  ["Scarf", "Dupatta"],
+  ["Fan", "Cooler"],
+  ["Fridge", "Freezer"],
+  ["Stove", "Oven"],
+  ["Kettle", "Thermos"],
+  ["Bus", "Microbus"],
+  ["Bicycle", "Scooter"],
+  ["Train", "Metro"],
+  ["College", "School"],
+  ["Library", "Bookstore"],
+  ["Teacher", "Professor"],
+  ["Exam", "Assignment"],
+  ["Phone", "Tablet"],
+  ["Charger", "Power Bank"],
+  ["Camera", "Phone"],
+  ["Headphones", "Earphones"],
+  ["Keyboard", "Piano"],
+  ["Spoon", "Fork"],
+  ["Knife", "Scissors"],
+  ["Comb", "Brush"],
+  ["Perfume", "Deodorant"],
+  ["Lipstick", "Lip Balm"],
+  ["Cream", "Lotion"],
+  ["Bag", "Purse"],
+  ["Wallet", "Pouch"],
+  ["Key", "Lock"],
+  ["Door", "Gate"],
+  ["Stairs", "Ladder"],
+  ["Road", "Path"]
+
+];
+
+
+/* =========================
+   GAME VARIABLES
+   ========================= */
+
+let players = [];
+let currentIndex = 0;
+
+let selectedPair;
+let wordA;
+let wordB;
+
+let differentPlayer;
+let startingPlayer;
+
+
+/* =========================
+   INITIAL PLAYER COUNT
+   ========================= */
+
+const playerCount = document.getElementById("playerCount");
+
+for (let i = 3; i <= 20; i++) {
+  const option = document.createElement("option");
+  option.value = i;
+  option.textContent = i + " players";
+  playerCount.appendChild(option);
+}
+
+
+/* =========================
+   SCREEN FUNCTION
+   ========================= */
+
+function showScreen(id) {
+
+  document.querySelectorAll(".screen").forEach(screen => {
+    screen.classList.add("hidden");
+  });
+
+  document.getElementById(id).classList.remove("hidden");
+}
+
+
+/* =========================
+   PLAYER SETUP
+   ========================= */
+
+function setupPlayers() {
+
+  const count = Number(playerCount.value);
+
+  const container = document.getElementById("nameInputs");
+
+  container.innerHTML = "";
+
+  for (let i = 0; i < count; i++) {
+
+    const input = document.createElement("input");
+
+    input.placeholder = "Player " + (i + 1);
+
+    input.id = "player" + i;
+
+    container.appendChild(input);
+  }
+
+  showScreen("setup");
+}
+
+
+/* =========================
+   START GAME
+   ========================= */
+
+function startGame() {
+
+  players = [];
+
+  for (let i = 0; i < Number(playerCount.value); i++) {
+
+    const name =
+      document.getElementById("player" + i).value.trim()
+      || "Player " + (i + 1);
+
+    players.push({
+      name: name,
+      word: null
+    });
+  }
+
+
+  /* Pick word pair */
+
+  selectedPair =
+    wordPairs[Math.floor(Math.random() * wordPairs.length)];
+
+  wordA = selectedPair[0];
+  wordB = selectedPair[1];
+
+
+  /* Pick different-word player */
+
+  const differentIndex =
+    Math.floor(Math.random() * players.length);
+
+  differentPlayer = players[differentIndex];
+
+  players.forEach(player => {
+
+    player.word =
+      player === differentPlayer
+      ? wordB
+      : wordA;
+
+  });
+
+
+  /* Pick starting player independently */
+
+  startingPlayer =
+    players[Math.floor(Math.random() * players.length)];
+
+
+  currentIndex = 0;
+
+  showNextPlayer();
+}
+
+
+/* =========================
+   NEXT PLAYER
+   ========================= */
+
+function showNextPlayer() {
+
+  if (currentIndex >= players.length) {
+
+    document.getElementById("startingPlayer").textContent =
+      startingPlayer.name;
+
+    showScreen("startScreen");
+
+    return;
+  }
+
+  document.getElementById("currentPlayer").textContent =
+    players[currentIndex].name;
+
+  showScreen("passScreen");
+}
+
+
+/* =========================
+   REVEAL WORD
+   ========================= */
+
+function revealWord() {
+
+  document.getElementById("wordDisplay").textContent =
+    players[currentIndex].word;
+
+  showScreen("wordScreen");
+}
+
+
+/* =========================
+   HIDE WORD
+   ========================= */
+
+function hideWord() {
+
+  document.getElementById("wordDisplay").textContent = "";
+
+  currentIndex++;
+
+  showNextPlayer();
+}
+
+
+/* =========================
+   FINAL REVEAL
+   ========================= */
+
+function showReveal() {
+
+  document.getElementById("wordAReveal").textContent =
+    wordA;
+
+  document.getElementById("wordBReveal").textContent =
+    wordB;
+
+  document.getElementById("imposterReveal").textContent =
+    differentPlayer.name;
+
+  showScreen("revealScreen");
+}
+
+</script>
+
+</body>
+</html>
