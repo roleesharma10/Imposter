@@ -322,10 +322,8 @@ button.danger {
       <div
         class="hold-progress"
         id="holdProgress">
-        Press and hold for one second.
+        Press and hold.
       </div>
-
-    
 
     </div>
   </div>
@@ -400,7 +398,7 @@ button.danger {
 
       <p>
         The next screen will reveal the two words
-        and who received the different word.
+        first. The imposter will be revealed separately.
       </p>
 
       <button onclick="showReveal()">
@@ -417,16 +415,14 @@ button.danger {
   </div>
 
 
-  <!-- REVEAL -->
+  <!-- WORDS REVEAL -->
   <div id="revealScreen" class="screen hidden">
 
     <div class="big-emoji">🔎</div>
 
-    <h2>Round Reveal</h2>
+    <h2>The Words Were...</h2>
 
     <div class="card">
-
-      <p>The two words were:</p>
 
       <div class="reveal-box">
         <strong id="wordAReveal"></strong>
@@ -437,8 +433,29 @@ button.danger {
       </div>
 
       <p>
-        The imposter is:
+        Now that you know both words...
       </p>
+
+      <p>
+        <strong>WHO DO YOU THINK GOT THE DIFFERENT WORD?</strong>
+      </p>
+
+      <button onclick="showImposterReveal()">
+        REVEAL IMPOSTER
+      </button>
+
+    </div>
+  </div>
+
+
+  <!-- IMPOSTER REVEAL -->
+  <div id="imposterRevealScreen" class="screen hidden">
+
+    <div class="big-emoji">💀</div>
+
+    <h2>The Imposter Is...</h2>
+
+    <div class="card">
 
       <div
         class="starting-player"
@@ -675,14 +692,15 @@ let wordB;
 
 let differentPlayer;
 let startingPlayer;
-  
-  /* =========================================
+
+
+/* =========================================
    USED WORD PAIR MEMORY
    ========================================= */
 
 let usedWordPairs =
   JSON.parse(
-    localStorage.getItem("usedWordPairs") || "[]"
+    localStorage.getItem("usedWordPairsV2") || "[]"
   );
 
 
@@ -856,61 +874,62 @@ function startFirstRound() {
 
 function startRound() {
 
-/* Pick random unused pair */
+  /* Pick random unused pair */
 
-let availablePairs =
-  wordPairs.filter(
-    (pair, index) =>
-      !usedWordPairs.includes(index)
+  let availablePairs =
+    wordPairs.filter(
+      pair =>
+        !usedWordPairs.includes(
+          pair.a + "|" + pair.b
+        )
+    );
+
+
+  /* If every pair has been used,
+     start a fresh cycle */
+
+  if (availablePairs.length === 0) {
+
+    usedWordPairs = [];
+
+    localStorage.removeItem(
+      "usedWordPairsV2"
+    );
+
+    availablePairs = [...wordPairs];
+  }
+
+
+  /* Pick random pair from unused pairs */
+
+  selectedPair =
+    availablePairs[
+      Math.floor(
+        Math.random() *
+        availablePairs.length
+      )
+    ];
+
+
+  /* Remember this pair */
+
+  const pairKey =
+    selectedPair.a + "|" + selectedPair.b;
+
+  usedWordPairs.push(pairKey);
+
+  localStorage.setItem(
+    "usedWordPairsV2",
+    JSON.stringify(usedWordPairs)
   );
 
 
-/* If every pair has been used, start a fresh cycle */
+  wordA =
+    selectedPair.a;
 
-if (availablePairs.length === 0) {
+  wordB =
+    selectedPair.b;
 
-  usedWordPairs = [];
-
-  localStorage.removeItem(
-    "usedWordPairs"
-  );
-
-  availablePairs = [...wordPairs];
-}
-
-
-/* Pick random pair from unused pairs */
-
-const randomPair =
-  availablePairs[
-    Math.floor(
-      Math.random() *
-      availablePairs.length
-    )
-  ];
-
-selectedPair =
-  randomPair;
-
-
-/* Remember this pair */
-
-const pairIndex =
-  wordPairs.indexOf(selectedPair);
-
-usedWordPairs.push(pairIndex);
-
-localStorage.setItem(
-  "usedWordPairs",
-  JSON.stringify(usedWordPairs)
-);
-
-
-wordA =
-  selectedPair.a;
-
-wordB =
-  selectedPair.b;
 
   /* Pick random different-word player */
 
@@ -1001,11 +1020,6 @@ function beginHold(event) {
   if (holding) return;
 
   holding = true;
-
-  const progress =
-    document.getElementById("holdProgress");
-
- 
 
   holdTimer =
     setTimeout(() => {
@@ -1104,7 +1118,7 @@ function showRevealConfirmation() {
 
 
 /* =========================================
-   FINAL REVEAL
+   SHOW WORDS FIRST
    ========================================= */
 
 function showReveal() {
@@ -1119,12 +1133,24 @@ function showReveal() {
     .textContent =
     wordB;
 
+  showScreen("revealScreen");
+}
+
+
+/* =========================================
+   REVEAL IMPOSTER
+   ========================================= */
+
+function showImposterReveal() {
+
   document
     .getElementById("imposterReveal")
     .textContent =
     differentPlayer.name;
 
-  showScreen("revealScreen");
+  showScreen(
+    "imposterRevealScreen"
+  );
 }
 
 
